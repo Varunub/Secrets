@@ -1,3 +1,4 @@
+require("dotenv").config()
 const express=require("express")
 const bp=require("body-parser")
 const ejs=require("ejs")
@@ -14,8 +15,9 @@ const mySchema=new mongoose.Schema({
         required:true
     }
 })
-const secret="Varunisawasteboy"
-mySchema.plugin(encrypt,{secret:secret,encryptedFields: ['password']})
+
+
+mySchema.plugin(encrypt,{secret:process.env.NAME,encryptedFields: ['password']})
 const user=mongoose.model("user",mySchema)
 
 const app=express()

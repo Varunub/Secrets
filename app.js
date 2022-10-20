@@ -1,10 +1,14 @@
-require("dotenv").config()
+//Level 1 Storing direct Password
+
+// require("dotenv").config() ///Level 3
 const express=require("express")
 const md5=require("md5")
 const bp=require("body-parser")
 const ejs=require("ejs")
 const mongoose=require("mongoose")
-const encrypt=require("mongoose-encryption")
+const bcrypt=require("bcrypt")
+const saltRounds=10
+// const encrypt=require("mongoose-encryption") ///Level 2
 mongoose.connect("mongodb://localhost:27017/userDB")
 const mySchema=new mongoose.Schema({
     Username:{
@@ -37,17 +41,22 @@ app.get("/register",function(req,res){
 })
 
 app.post("/register",function(req,res){
-    const newUser=new user({
-        Username:req.body.username,
-        password:md5(req.body.password)
+    bcrypt.hash(req.body.password,saltRounds,function(err,hash){
+        let shash=hash
+        const newUser=new user({
+            Username:req.body.username,
+            password:hash
+        })
+        newUser.save(function(err){
+            if(err){
+                console.log(err)
+            }else{
+                res.render("secrets")
+            }
+        })
     })
-    newUser.save(function(err){
-        if(err){
-            console.log(err)
-        }else{
-            res.render("secrets")
-        }
-    })
+    
+    
     
 })
 
@@ -70,12 +79,14 @@ app.post("/login",function(req,res){
     user.findOne({Username:req.body.username},function(err,result){
         // console.log(result.password)
         if(result){
-            if(result.password === md5(req.body.password)){
-                res.render("secrets")
-            }
-            else{
-                res.send("You Entered Wrong Password")
-            }
+            bcrypt.compare(req.body.password,result.password,function(err,result){
+                if(result === true){
+                    res.render("secrets")
+                }
+                else{
+                    res.send("You Entered Wrong Password")
+                }
+            })
         }
         else{
             res.send("Register First")
